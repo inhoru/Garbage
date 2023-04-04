@@ -56,4 +56,53 @@ FROM EMPLOYEE;
 -- 16. EMPLOYEE테이블에서 사원명, 주민번호 조회 (단, 주민번호는 생년월일만 보이게 하고, '-'다음 값은 '*'로바꾸기)
 SELECT EMP_NAME ,CONCAT(SUBSTR(EMP_NO,1,7),'*******') AS 주민번호
 FROM EMPLOYEE;
+-- 17. EMPLOYEE테이블에서 사원명, 입사일-오늘, 오늘-입사일 조회 *년도에 따라 일수가 다를 수 있음. 참고만할 것
+-- (단, 각 별칭은 근무일수1, 근무일수2가 되도록 하고 모두 정수(내림), 양수가 되도록 처리
+SELECT EMP_NAME,   ABS(FLOOR(HIRE_DATE-SYSDATE))AS 근무일수1, FLOOR(SYSDATE-HIRE_DATE)AS 근무일수2
+FROM EMPLOYEE;
+--18. EMPLOYEE테이블에서 사번이 홀수인 직원들의 정보 모두 조회
+SELECT *
+FROM EMPLOYEE
+WHERE MOD(EMP_ID,2)!=0;
+--19. EMPLOYEE테이블에서 근무 년수가 25년 이상인 
+SELECT *
+FROM EMPLOYEE
+WHERE SYSDATE-HIRE_DATE>=365*25;
+-- 20. EMPLOYEE 테이블에서 사원명, 급여 조회 (단, 급여는 '\9,000,000' 형식으로 표시)
+SELECT EMP_NAME AS 사원명,TO_CHAR(SALARY,'FML999,999,999') AS 급여
+FROM EMPLOYEE;
+--21. EMPLOYEE테이블에서 직원 명, 부서코드, 생년월일, 나이(만) 조회
+-- (단, 생년월일은 주민번호에서 추출해서 00년 00월 00일로 출력되게 하며
+-- 나이는 주민번호에서 출력해서 날짜데이터로 변환한 다음 계산)
+SELECT EMP_NAME AS 이름, DEPT_CODE AS 부서코드, SUBSTR(EMP_NO,1,2)||'년'||SUBSTR(EMP_NO,3,2)||'월'||SUBSTR(EMP_NO,5,2)||'일' AS 생년월일,
+EXTRACT(YEAR FROM SYSDATE) - EXTRACT(YEAR FROM TO_DATE(SUBSTR(EMP_NO,1,2),'RR')) AS나이
+FROM EMPLOYEE;
+--22. EMPLOYEE테이블에서 부서코드가 D5, D6, D9인 사원만 조회하되 D5면 총무부, D6면 기획부
+--, D9면 영업부로 처리 (단, 부서코드 오름차순으로 정렬)
+SELECT EMP_ID,EMP_NAME,DEPT_CODE,
+        CASE
+                WHEN DEPT_CODE = 'D5' THEN '총무부'
+                WHEN DEPT_CODE = 'D6' THEN '기획부'
+                WHEN DEPT_CODE = 'D9' THEN '영업부'
+        END AS직책
+  FROM EMPLOYEE 
+WHERE DEPT_CODE IN ('D5','D6','D9')
+ORDER BY DEPT_CODE;
+--23. EMPLOYEE테이블에서 사번이 201번인 사원명, 주민번호 앞자리, 주민번호 뒷자리, 
+ --주민번호 앞자리와 뒷자리의 합
+SELECT EMP_NAME AS 이름, SUBSTR(EMP_NO,1,6)AS 앞자리,SUBSTR(EMP_NO,8,7)AS 뒷자리 ,(SUBSTR(EMP_NO,1,6)+SUBSTR(EMP_NO,8,7))AS 합
+FROM EMPLOYEE
+WHERE EMP_ID = '201';
+--24. EMPLOYEE테이블에서 부서코드가 D5인 직원의 보너스 포함 연봉 합 조회
+SELECT SUM((SALARY+(SALARY*NVL(BONUS,0)))*12)
+FROM EMPLOYEE
+WHERE DEPT_CODE = 'D5';
+-- 25. EMPLOYEE테이블에서 직원들의 입사일로부터 년도만 가지고 각 년도별 입사 인원수 조회
+ --전체 직원 수, 2001년, 2002년, 2003년, 2004년
+ SELECT COUNT(*) AS 전체직원수,COUNT(HIRE_DATE) AS "2001년",COUNT(HIRE_DATE)AS "2002년",COUNT(HIRE_DATE)AS "2003년",COUNT(HIRE_DATE)AS "2004년"
+ FROM EMPLOYEE
+WHERE EXTRACT(YEAR FROM HIRE_DATE) = '2001';
+ 
+
+
 
