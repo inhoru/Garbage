@@ -7,7 +7,7 @@ FROM EMPLOYEE
 WHERE SUBSTR(EMP_NO,1,1)='6';
 --4. '010' 핸드폰 번호를 쓰지 않는 사람의 수를 출력하시오 (뒤에 단위는 명을 붙이시오)
 SELECT COUNT(*)||'명'AS 인원
-FROM EMPLOYEE
+FROM EMPLOYEE--
 WHERE PHONE IS NULL;
 -- 5. 직원명과 입사년월을 출력하시오 
 SELECT EMP_NAME AS 직원명,EXTRACT(YEAR FROM(HIRE_DATE))||'년'||EXTRACT(MONTH FROM(HIRE_DATE))||'월'AS 입사년월
