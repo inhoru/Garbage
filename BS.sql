@@ -852,8 +852,10 @@ GROUP BY DEPT_CODE;
 -- 부서별 인원이 3명이상인 부서만 출력하기
 SELECT DEPT_CODE, COUNT(*)
 FROM EMPLOYEE
+
 -- WHERE 는 그룹함수를 사용할수가없다.
 --WHERE COUNT(*) >=3
+ -- HAVING 사용한다.   HAVING COUNT(*) >=3; 
 GROUP BY DEPT_CODE
 HAVING COUNT(*) >=3;
 
@@ -1225,6 +1227,8 @@ FROM EMPLOYEE
         LEFT JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID
         LEFT JOIN LOCATION ON LOCATION_ID=LOCAL_CODE
         JOIN JOB USING(JOB_CODE);
+        
+        
 
 -- 서브쿼리  : SELECT 문 안에 SELECT문이 하나 더 있는 쿼리문을 말함.
 -- 서브쿼리는 반드시 괄호안에 작성을 해야한다.
@@ -1288,13 +1292,343 @@ WHERE JOB_CODE IN( SELECT JOB_CODE FROM JOB WHERE JOB_NAME IN ('부장','과장'));
 -- ALL  :  AND로 ROW를 연결
 -- 컬럼 >(=) ANY(서브쿼리) :  다중행 서브쿼리의 결과 중 하나라도 크면 참 -> 다중행 서브쿼리의 결과중 최소값보다 크면
 -- 컬럼<(=) ANY(서브쿼리) :  다중행 서브쿼리의 결과 중 하나라도 작으면 참 -> 다중행 서브쿼리의 결과중 최대값보다 작으면 참
+
+
 SELECT *
 FROM EMPLOYEE
 WHERE SALARY >=  (SELECT SALARY FROM EMPLOYEE WHERE DEPT_CODE IN('D5','D6'));
 
 SELECT *
 FROM EMPLOYEE
-WHERE SALARY >= ANY(SELECT SALARY FROM EMPLOYEE WHERE DEPT_CODE IN ('D5','D6'));
+
+--WHERE SALARY >= (SELECT MIN(SALARY) FROM EMPLOYEE WHERE DEPT_CODE IN ('D5', 'D6'));
+WHERE SALARY >= ANY (SELECT SALARY FROM EMPLOYEE WHERE DEPT_CODE IN ('D5', 'D6'));
+
+-- 컬럼 >(=) ALL(서브쿼리) : 다중행 서브쿼리의 결과가 모두 클 때 참 -> 다중행 서브쿼리의 결과 중 최대 값보다 크면 참
+-- 컬럼 <(=) ALL(서브쿼리) : 다중행 서브쿼리의 결과가 모두 작을 때 참 -> 다중행 서브쿼리의 결과 중 최소값보다 작으면 참
+SELECT EMP_NAME, SALARY
+FROM EMPLOYEE
+-- WHERE SALARY < (SELECT MIN(SALARY) FROM EMPLOYEE WHERE DEPT_CODE IN ('D5', 'D6')); 
+WHERE SALARY < ALL(SELECT SALARY FROM EMPLOYEE WHERE DEPT_CODE IN ('D5', 'D6')); 
+
+-- 2000년 1월 1일 이전 입사자 중 가장 높게 받는 것보다 2000년 1월 1일 이후  급여를 높게 받는 사원의 사원명, 급여, 조회
+SELECT EMP_NAME, SALARY
+FROM EMPLOYEE
+WHERE HIRE_DATE < '00/01/01'
+          AND SALARY > ALL(SELECT SALARY FROM EMPLOYEE WHERE HIRE_DATE > '00/01/01');
+
+
+-- 3. 다중열 서브쿼리 : 열이 다수, 행이 1개인 쿼리문
+-- 퇴직한 여사원의 같은부서, 같은직급에 해당하는 사원 조회
+SELECT DEPT_CODE, JOB_CODE FROM EMPLOYEE WHERE ENT_YN = 'Y' AND SUBSTR(EMP_NO, 8, 1) = '2';
+
+SELECT *
+FROM EMPLOYEE
+WHERE (DEPT_CODE, JOB_CODE) IN (SELECT DEPT_CODE, JOB_CODE FROM EMPLOYEE WHERE ENT_YN = 'Y' AND SUBSTR(EMP_NO, 8, 1) = '2')
+            AND ENT_YN = 'N';
+
+-- 기술지원부이면서 급여가 200만원 사원이 있다.
+-- 그 사원의 이름, 부서, 급여 출력
+SELECT DEPT_CODE, DEPT_TITLE, DEPT_ID FROM DEPARTMENT, EMPLOYEE;
+
+SELECT EMP_NAME, DEPT_CODE, SALARY
+FROM EMPLOYEE
+WHERE DEPT_CODE IN (SELECT DEPT_ID FROM DEPARTMENT WHERE DEPT_ID = 'D8')
+           AND SALARY >= 2000000;
+
+-- 4. 다중행 다중열 서브쿼리
+-- 사원중 총무부이고 300만원 이상 월급을 받는 사원
+SELECT DEPT_CODE, SALARY
+FROM EMPLOYEE JOIN DEPARTMENT ON DEPT_CODE = DEPT_ID
+WHERE DEPT_TITLE = '총무부' AND SALARY >= 3000000;
+
+SELECT *
+FROM EMPLOYEE
+WHERE (DEPT_CODE, SALARY) IN
+        (SELECT DEPT_CODE, SALARY
+         FROM EMPLOYEE JOIN DEPARTMENT ON DEPT_CODE = DEPT_ID
+         WHERE DEPT_TITLE = '총무부' AND SALARY >= 3000000);
+
+-- 다중행, 다중열 서브쿼리는 컬럼에는 사용하지 못함
+-- WHERE, FROM절에 사용 
+-- FROM절에 사용 : INLINE VIEW
+
+SELECT EMP_NAME,  (SELECT DEPT_CODE, SALARY
+         FROM EMPLOYEE JOIN DEPARTMENT ON DEPT_CODE = DEPT_ID
+         WHERE DEPT_TITLE = '총무부' AND SALARY >= 3000000) AS TEST
+FROM EMPLOYEE;
+
+-- 상관 서브쿼리
+-- 서브쿼리를 구성할때 메인 쿼리에 값을 가져와 사용하게설정
+-- 메인쿼리의 값이 서브쿼리의 결과에 영향을 주고, 서브쿼리의 결과가 메인쿼리의 결과에 영향을 주는 쿼리문
+-- 본인이 속한 부서의 사원수를 조회를 하기 
+-- 사원명, 부서코드, 사원수
+SELECT EMP_NAME, DEPT_CODE, (SELECT COUNT(*)  FROM EMPLOYEE WHERE DEPT_CODE = E.DEPT_CODE) AS 사원수
+FROM EMPLOYEE E ;
+
+-- WHERE 에 상관서브쿼리 이용하기
+-- EXISTS (서브쿼리) : 서브쿼리의 결과가 1행 이상이면 TRUE, 0행이면 FALSE
+
+SELECT *
+FROM EMPLOYEE E
+--WHERE EXISTS (SELECT DEPT_CODE FROM EMPLOYEE WHERE DEPT_CODE ='D9');
+WHERE EXISTS(SELECT 1 FROM EMPLOYEE WHERE MANAGER_ID=E.EMP_ID);
+
+-- 최소급여를 받는 사원 조회하기
+SELECT *
+FROM EMPLOYEE E
+WHERE NOT EXISTS(SELECT SALARY FROM EMPLOYEE WHERE SALARY<E.SALARY);
+
+-- 모든사원의 사원번호, 이름, 매니저아이디, 매니저 이름 조회하기
+-- 서브쿼리로 풀어보자
+SELECT EMP_ID, EMP_NAME, MANAGER_ID ,(SELECT EMP_NAME FROM EMPLOYEE M WHERE E.MANAGER_ID=M.EMP_ID)  AS 매니저이름
+FROM EMPLOYEE E;
+
+
+-- 사원의 이름 , 급여 , 부서명, 소속부서급여 평균 조회하기
+SELECT EMP_NAME, SALARY, DEPT_TITLE, TO_CHAR(FLOOR((SELECT AVG(SALARY)  FROM EMPLOYEE  WHERE E.DEPT_CODE = DEPT_CODE)))
+FROM EMPLOYEE E
+        JOIN DEPARTMENT  ON DEPT_CODE =DEPT_ID;
+
+-- 직급이 J1이 아닌 사원중에서 자신의 부서별 평균 급여보다 급여를 적게 받는 사원 조회하기
+SELECT *
+FROM EMPLOYEE E
+WHERE JOB_CODE != 'J1'
+    AND SALARY<(SELECT AVG(SALARY) FROM EMPLOYEE WHERE E.DEPT_CODE = DEPT_CODE);
+
+-- 자신이 속한 직급의 평균급여보다 많이 받는 직원의 이름, 직책명, 급여를 조회하기
+SELECT EMP_NAME, JOB_NAME, SALARY
+FROM EMPLOYEE E
+        JOIN JOB J ON E.JOB_CODE=J.JOB_CODE
+        WHERE SALARY>(SELECT AVG(SALARY) FROM EMPLOYEE WHERE E.JOB_CODE=JOB_CODE);
+        
+-- FROM 절에 서브쿼리 이용하기
+-- INLINE VIEW
+-- FROM절에 사용하는 서브쿼리는 대부분 다중행 다중열서브쿼리 사용
+-- RESULT SET을 하나의 테이블처럼 사용하게 하는 것
+-- 가상컬럼을 포함하고 있거나, JOIN을 사용한 SELECT문을 사용
+-- VIEW : INLINE VIEW, STORED VIEW
+
+-- EMPLOYEE테이블에 성별(남,여)을 추가해서 출력하기
+SELECT E.*, 
+    CASE
+            WHEN  SUBSTR(EMP_NO,8,1) ='1' THEN '남'
+            WHEN  SUBSTR(EMP_NO,8,1) ='3' THEN '남'
+            WHEN  SUBSTR(EMP_NO,8,1) ='2' THEN '여'
+            WHEN  SUBSTR(EMP_NO,8,1) ='4' THEN '여'
+            END AS성별
+
+FROM EMPLOYEE E;
+
+-- 성별중 여자만 출력하기
+SELECT E.* ,DECODE(SUBSTR(EMP_NO,8,1),'1','남','2','여','3','남','4','여') AS GENDER
+FROM EMPLOYEE E
+WHERE SUBSTR(EMP_NO, 8, 1) IN ('2', '4');
+
+
+-- INLINE VIEW
+-- FROM 절에 서브쿼리를 이용한다.
+-- 별칭을 이용해서 WHERE에서 사용이가능하다.
+SELECT *
+FROM(
+        SELECT E.*, DECODE(SUBSTR(EMP_NO, 8, 1), '1', '남', '2', '여', '3', '남', '4', '여') AS 성별
+        FROM EMPLOYEE E
+) WHERE 성별 = '여';
+
+-- JOIN,집합연산자 활용했을때
+SELECT *
+FROM (
+        SELECT * 
+        FROM EMPLOYEE
+            LEFT JOIN DEPARTMENT ON DEPT_CODE = DEPT_ID
+            JOIN JOB USING(JOB_CODE)
+)
+WHERE DEPT_TITLE='총무부' AND JOB_NAME = '부사장';
+
+SELECT *
+FROM (SELECT E.*,D.*,
+            (SELECT TRUNC(AVG(SALARY)-1)FROM EMPLOYEE WHERE DEPT_CODE = E.DEPT_CODE) AS DEPT_SAL_AVG
+            FROM EMPLOYEE E
+            LEFT JOIN DEPARTMENT D ON DEPT_CODE=DEPT_ID)
+WHERE DEPT_SAL_AVG > 3000000;    
+
+-- 집합연산자이용하기
+SELECT *
+FROM (SELECT EMP_ID AS CODE, EMP_NAME AS TITLE
+        FROM EMPLOYEE
+        UNION
+        SELECT DEPT_ID, DEPT_TITLE
+        FROM DEPARTMENT
+        UNION
+        SELECT JOB_CODE, JOB_NAME
+        FROM JOB
+)
+WHERE CODE LIKE '%1%';
+
+--SELECT *
+--        FROM (SELECT ROWNUM AS RNUM,E.*
+--                FROM (SELECT * FROM EMPLOYEE)E);
+
+-- ROW에 순위를 정하고 출력하기
+-- TOP-N출력하기 
+-- 급여를 많이 받는 사원 1~3위까지 출력하기
+SELECT EMP_NAME, SALARY
+FROM (SELECT ROWNUM,E.* FROM EMPLOYEE E ORDER BY SALARY DESC)
+--WHERE ROWNUM<=3
+ WHERE ROWNUM BETWEEN 1 AND 3;
+
+-- 1. 오라클이 제공하는 가상커럼 ROWNUM 을 이용하기
+SELECT ROWNUM, E.* 
+FROM EMPLOYEE E
+WHERE ROWNUM BETWEEN 1 AND 3;
+
+-- SELECT 문을 실행할때마다 ROWNUM이 생성이 됨,
+SELECT ROWNUM,T.*
+FROM(
+            SELECT ROWNUM AS INNERNUM, E.*
+            FROM EMPLOYEE E
+            ORDER BY SALARY DESC
+)T
+WHERE ROWNUM<=3;
+
+
+-- 5~10 까지구하기
+--나중에 페이징처리할떄 사용한데 기억하래아아ㅏㅏㅏㅏㅏㅏㅏㅏㅏㅏㅏㅏㅏ
+SELECT *
+FROM(
+    SELECT ROWNUM AS RNUM,T.*
+    FROM( SELECT *
+                FROM EMPLOYEE 
+                ORDER BY SALARY DESC ) T)
+WHERE RNUM  BETWEEN 5 AND 10;
+
+-- 2. RANK_OVER()함수 이용하기
+-- 중복 순위 개수만큼 다음 순위 값을 증가 시킴
+SELECT *
+FROM(SELECT EMP_NAME, SALARY,RANK() OVER(ORDER BY SALARY DESC) AS NUM
+FROM EMPLOYEE
+)
+WHERE NUM BETWEEN 5 AND 10;
+
+-- DENSC_RANK() OVER 이용
+-- 중복 순위가 존재해도 순차적으로 다음 순위 값을 표시함 
+SELECT *
+FROM(SELECT EMP_NAME, SALARY,RANK() OVER(ORDER BY SALARY DESC) AS NUM,
+DENSE_RANK() OVER(ORDER BY SALARY DESC) AS NUM2
+FROM EMPLOYEE
+)
+WHERE NUM BETWEEN 1 AND 23;
+
+-- 평균급여를 많이 받는 부서 3개 출력하기
+--SELECT DEPT_CODE, AVG(SALARY)
+--FROM(SELECT * FROM EMPLOYEE ORDER BY AVG(SALARY) DESC)
+--WHERE ROWNUM <=3
+--GROUP BY DEPT_CODE;
+
+
+SELECT *
+FROM(
+    SELECT ROWNUM AS RNUM,D.*
+    FROM(
+        SELECT DEPT_TITLE,AVG(SALARY)AS SAL_AVG
+        FROM DEPARTMENT
+                JOIN EMPLOYEE ON DEPT_CODE=DEPT_ID
+                GROUP BY DEPT_TITLE
+        ORDER BY 2 DESC
+    )   D
+)
+WHERE RNUM<=3;
+
+-- DDL에 대해 알아보자
+-- 데이터 정의언어로 오라클에서 사용하는 객체를 생성, 수정 , 삭제하는 명령어
+-- 생성 : CREATE 오브젝트명 ......
+-- 수정 : ALTER 오브젝트명 ......
+-- 삭제 : DROP 오브젝트명 
+
+-- 테이블을 생성하는 방법부터 알아보자....
+-- 테이블생성 :  데이터를 저장할 수 있는 공간을 생성하는것
+-- 테이블을 생성하기 위해서는 저장공간을 확보하는데 확보할때 TYPE이 필요
+-- 오라클이 제공하는 타입중 자주 쓰는 타입에 대해 알아보자.
+-- 문자형타입 :  CHAR, VARCHAR2, NCHAR, NVARCHAR2, CLOB
+-- 숫자형타입 :  NUMBER
+-- 날짜형타입 :  DATA, TIMESTAMP
+
+-- 문자형타입에 대해 알아보자
+-- CHAR(길이) : 고정형 문자열 저장타입으로 길이만큼 공간을 확보하고 저장한다. * 최대 2000바이트저장가능
+-- VARCHAR2(길이) : 가변형 문자열 저장 타입으로 저장되는 데이터만큼 공간확보하고 저장한다.
+CREATE TABLE TBL_STR(
+-- 6바이트씩들어감
+    A CHAR(6),
+    B VARCHAR2(6),
+    C NCHAR(6),
+    D NVARCHAR2(6)
+);
+
+-- 적은 순서대로 저장이된다.
+SELECT * FROM TBL_STR;
+INSERT INTO TBL_STR VALUES('ABC','ABC','ABC','ABC');
+INSERT INTO TBL_STR VALUES('가나','가나','가나','가나');
+-- 자동형변환으로 숫자여도 자동형변환으로 들어간다.
+INSERT INTO TBL_STR VALUES(12,'가나','가나','가나');
+-- NCHAR 는 바이트기반
+-- VARCHAR은 글자수기반
+--2000자이하면 그냥 VARCHAR2쓰면 된다.
+INSERT INTO TBL_STR VALUES('가나','가나','가나','가나다라마바');
+SELECT LENGTH(A),LENGTH(B),LENGTH(C),LENGTH(D)
+FROM TBL_STR;
+
+
+-- 숫자형 자료형
+-- NUMBER : 실수, 정수 모두 저장이 가능함.
+-- 선언방법
+-- NUMBER : 기본값
+-- NUMBER(PRECISION, SCALE) : 저장할 범위 설정
+--      PRECISION :  표현할 수 있는 전체 자리수(1~38)
+--      SCALE : 소수점이하의 자리수(-84 ~ 127)
+
+CREATE TABLE TBL_NUM(
+    -- 전체다출력
+    A NUMBER,
+    -- 수서자리는 반올림해서 정수만표현
+    B NUMBER(5),
+    -- 소수점 한자리만표시후 반올림
+    C NUMBER(5,1),
+    -- 소수점을 없애고 2칸앞으로 간다 지나온수는 0으로만듬
+    D NUMBER(5,-2)
+    
+);
+
+SELECT * FROM TBL_NUM;
+
+INSERT INTO TBL_NUM VALUES(1234.567,1234.567,1234.567,1234.567);
+-- 정수 5개 가능하다. 소수점 자리상관무 
+INSERT INTO TBL_NUM VALUES(123456.123,12345.123,0,0);
+-- 정수 4자리 소수점 1자리만가져온다 소수점자리상관무
+INSERT INTO TBL_NUM VALUES(123456.123,12345.123,1234.123,0);
+-- -2하면 총 7자리를 넣을수있다.
+INSERT INTO TBL_NUM VALUES(123456.123,12345.123,1234.123,1234567);
+-- 자동형변환이 자유롭다 
+INSERT INTO TBL_NUM VALUES('1234.567','1234.567','1234.567','1234.567');
+
+
+-- 날짜
+-- DATE, TIMESTAMP
+CREATE TABLE TBL_DATE(
+    BIRTHDAY DATE,
+    TODAY TIMESTAMP
+);
+SELECT * FROM TBL_DATE;
+INSERT INTO TBL_DATE VALUES('98/08/03','98/01/26 15:30:30');
+INSERT INTO TBL_DATE VALUES(TO_DATE('98/08/03','RR/MM/DD'),
+                TO_TIMESTAMP('98/01/26 15:30:30','RR/MM/DD HH24:MI:SS'));
+
+CREATE TABLE TBL_STR2(
+    TESTSTR CLOB,
+    TESTVARCHAR VARCHAR2(2000)
+);
+-- 2기가 까지가능하다.
+--SELECT * FROM TBL_STR2;
+--INSERT INTO TBL_STR2 VALUES(
 
 
 
