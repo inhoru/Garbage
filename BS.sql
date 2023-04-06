@@ -985,8 +985,8 @@ FROM EMPLOYEE
 --ORDER BY BONUS  DESC; -- NULL인 값을 먼저 출력한다.
 --ORDER BY BONUS  ASC; -- NULL인 값을 나중에 출력한다.
 -- 옵션을 설정해서 NULL값출력위치를 변경할 수 있다.
---ORDER BY BONUS ASC NULLS FIRST;
-ORDER BY BONUS ASC NULLS LAST;
+ORDER BY BONUS ASC NULLS FIRST;
+--ORDER BY BONUS ASC NULLS LAST;
 
 
 -- ORDER BY 절에서는 별칭을 사용할 수 있음
@@ -1555,7 +1555,7 @@ WHERE RNUM<=3;
 
 -- 문자형타입에 대해 알아보자
 -- CHAR(길이) : 고정형 문자열 저장타입으로 길이만큼 공간을 확보하고 저장한다. * 최대 2000바이트저장가능
--- VARCHAR2(길이) : 가변형 문자열 저장 타입으로 저장되는 데이터만큼 공간확보하고 저장한다.
+-- VARCHAR2(길이) : 가변형 문자열 저장 타입으로 저장되는 데이터만큼 공간확보하고 저장한다. *최대 4000바이트저장가능
 CREATE TABLE TBL_STR(
 -- 6바이트씩들어감
     A CHAR(6),
