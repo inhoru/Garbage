@@ -36,7 +36,7 @@ SELECT SYSDATE
 FROM DUAL;
 -- 10. EMP테이블에서 사번, 사원명, 급여 조회
 -- 단, 급여는 100단위까지의 값만 출력 처리하고 급여 기준 내림차순 정렬)
-SELECT EMPNO,ENAME,FLOOR(SAL/10)
+SELECT EMPNO,ENAME,TRUNC(SAL,-2)
 FROM EMP;
 -- 11. EMP테이블에서 사원번호가 홀수인 사원들을 조회
 SELECT EMPNO
@@ -56,7 +56,7 @@ WHERE EXTRACT(YEAR FROM HIREDATE)=1981;
 -- 15. EMP테이블에서 이름이 'E'로 끝나는 직원 조회
 SELECT *
 FROM EMP
-WHERE ENAME LIKE '%E';  --이거왜 MANAGER은 표시가되지?
+WHERE ENAME LIKE '%E'; 
 -- 16. EMP테이블에서 이름의 세 번째 글자가 'R'인 직원의 정보 조회
 -- 16-1. LIKE 사용
 SELECT *
@@ -69,7 +69,7 @@ FROM EMP
 WHERE SUBSTR(ENAME,3,1) = 'R';
 
 -- 17. EMP테이블에서 사번, 사원명, 입사일, 입사일로부터 40년 되는 날짜 조회
-SELECT EMPNO,ENAME,HIREDATE,HIREDATE+365*38
+SELECT EMPNO,ENAME,HIREDATE,HIREDATE+365*40
 FROM EMP;
 -- 18. EMP테이블에서 입사일로부터 38년 이상 근무한 직원의 정보 조회
 SELECT *
