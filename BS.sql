@@ -1226,11 +1226,76 @@ FROM EMPLOYEE
         LEFT JOIN LOCATION ON LOCATION_ID=LOCAL_CODE
         JOIN JOB USING(JOB_CODE);
 
-      
+-- 서브쿼리  : SELECT 문 안에 SELECT문이 하나 더 있는 쿼리문을 말함.
+-- 서브쿼리는 반드시 괄호안에 작성을 해야한다.
+-- 윤은혜사원과 동일한 급여를 받고있는 사원을 조회하기
+SELECT SALARY FROM EMPLOYEE WHERE EMP_NAME='윤은해';
+SELECT *
+FROM EMPLOYEE
+WHERE SALARY = 2000000;
+
+SELECT *
+FROM EMPLOYEE
+WHERE SALARY = (SELECT SALARY FROM EMPLOYEE WHERE EMP_NAME = '윤은해');
+
+-- D5부서의 평균급여보다 많이 받는 사원구하기
+SELECT *
+FROM EMPLOYEE
+WHERE SALARY >= (SELECT AVG(SALARY) FROM EMPLOYEE WHERE DEPT_CODE = 'D5');
+
+-- 1. 단일행서브쿼리
+-- 서브쿼리 SELECT문의 결과가  1개열, 1개행인 것
+-- 위에잇는것들이전부 단일행 서브쿼리다.
+-- 컬럼(SELECT), WHERE절에 비교대상 값
+-- 사원들의 급여 평균보다 많이 급여를 받는 사원의 이름, 급여 , 부서코드를 출력하기
+SELECT EMP_NAME, SALARY, DEPT_CODE,(SELECT AVG(SALARY)FROM EMPLOYEE) AS AVG
+FROM EMPLOYEE
+WHERE SALARY>=(SELECT AVG(SALARY) FROM EMPLOYEE);
   
+  -- 부서가 총무부인 사원을 조회하기
+SELECT *
+FROM EMPLOYEE
+WHERE DEPT_CODE = (SELECT DEPT_ID FROM DEPARTMENT WHERE  DEPT_TITLE='총무부');
 
+-- 위에를 조인해서 사용할수도있다.
+SELECT *
+FROM EMPLOYEE
+        JOIN DEPARTMENT ON DEPT_CODE = DEPT_ID
+WHERE DEPT_TITLE = '총무부';
 
+-- 직책이 과장인 사원을 조회하기
+SELECT *
+FROM EMPLOYEE
+WHERE JOB_CODE = (SELECT JOB_CODE FROM JOB WHERE JOB_NAME = '과장');
 
+-- 2. 다중행 서브쿼리
+-- 서브쿼리의 결과가 한개열 다수 행(ROW) 을 갖는 것
+-- 직책이 부장, 과장인 사원을 조회하기
+SELECT JOB_CODE
+FROM JOB
+WHERE JOB_NAME IN('부장','과장');
+
+-- 다중행을 동등비교할때 = 을 사용불가능
+-- OR 나 IN 으로 연결해서 사용한다.
+SELECT *
+FROM EMPLOYEE
+WHERE JOB_CODE IN( SELECT JOB_CODE FROM JOB WHERE JOB_NAME IN ('부장','과장'));
+
+-- 다중행에 대한 대소비교하기
+-- >=, >, <, <=
+--다중행 대소비교할떄는 쓰는명령어
+-- ANY : OR로 ROW를 연결
+-- ALL  :  AND로 ROW를 연결
+-- 컬럼 >(=) ANY(서브쿼리) :  다중행 서브쿼리의 결과 중 하나라도 크면 참 -> 다중행 서브쿼리의 결과중 최소값보다 크면
+-- 컬럼<(=) ANY(서브쿼리) :  다중행 서브쿼리의 결과 중 하나라도 작으면 참 -> 다중행 서브쿼리의 결과중 최대값보다 작으면 참
+SELECT *
+FROM EMPLOYEE
+WHERE SALARY >=  (SELECT SALARY FROM EMPLOYEE WHERE DEPT_CODE IN('D5','D6'));
+
+SELECT *
+FROM EMPLOYEE
+WHERE SALARY >= ANY(SELECT SALARY FROM EMPLOYEE WHERE DEPT_CODE IN ('D5','D6'));
+--
 
 
 
