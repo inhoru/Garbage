@@ -1,1 +1,1 @@
-# Academy_DB_assignment
+# 쓰레기통
